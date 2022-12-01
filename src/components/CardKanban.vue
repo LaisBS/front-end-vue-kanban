@@ -21,7 +21,6 @@
         :placeholder="value.phone"
         :dark="true"
         dense
-        :value="value.phone"
         v-model="input.phone"
       ></v-text-field>
       <v-btn elevation="2" x-small @click.stop="editBlock(id, list)"
