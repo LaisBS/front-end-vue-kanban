@@ -27,42 +27,16 @@
         <div v-for="stage in stages" :slot="stage" :key="stage">
           <h2>{{ stage }}</h2>
         </div>
-        <div v-for="block in blocks" :slot="block.id" :key="block.id" id="hi">
-          <div id="head">
-            <v-text-field
-              :placeholder="block.title"
-              :dark="true"
-              dense
-              v-model="title"
-            ></v-text-field>
-
-            <span @click.stop="exclude(block.id)">X</span>
-          </div>
-          <div>
-            <v-text-field
-              v-model="email"
-              :placeholder="block.email"
-              :dark="true"
-              dense
-            ></v-text-field>
-            <v-text-field
-              :placeholder="block.phone"
-              :dark="true"
-              dense
-              v-model="phone"
-            ></v-text-field>
-            <v-btn
-              elevation="2"
-              x-small
-              @click.stop="editBlock(block.id, block.status)"
-              >Salvar</v-btn
-            >
-          </div>
-        </div>
-        <div class="drag-column-footer">
-          <slot :name="`footer-${stage}`"></slot>
-          <a class="newCard">+ Adicionar novo leader</a>
-        </div>
+        <CardKanban
+          v-for="block in blocks"
+          :slot="block.id"
+          :key="block.id"
+          :value="block"
+          :id="block.id"
+          :list="blocks"
+          @post-alert="modalData"
+          @post-updated="updateBlock(block.id, block.status)"
+        />
       </kanban-board>
     </div>
   </div>
@@ -70,6 +44,7 @@
 
 <script>
 import api from "@/services";
+import CardKanban from "./CardKanban.vue";
 import FormModal from "./FormModal.vue";
 export default {
   name: "CanvasKanban",
@@ -82,14 +57,11 @@ export default {
       msg: "",
       type: "",
       editableBlock: false,
-      updatedData: [],
-      email: "",
-      title: "",
-      phone: "",
     };
   },
   components: {
     FormModal,
+    CardKanban,
   },
   created() {
     this.getInfo();
@@ -124,6 +96,7 @@ export default {
       try {
         await api.patch(`/leads/${block.id}`, block).then((res) => {
           this.getInfo();
+
           return res;
         });
       } catch (err) {
@@ -134,26 +107,7 @@ export default {
         }, "3000");
       }
     },
-    async exclude(id) {
-      try {
-        await api.delete(`/leads/${id}`).then((res) => {
-          this.type = "success";
-          this.msg = "Lead deletado com sucesso";
-          this.getInfo();
-          setTimeout(() => {
-            this.msg = "";
-          }, "3000");
-          return res;
-        });
-      } catch (err) {
-        console.log(err);
-        this.type = "error";
-        this.msg = err.response.data.message;
-        setTimeout(() => {
-          this.msg = "";
-        }, "3000");
-      }
-    },
+
     modalData(alertData) {
       this.msg = alertData.msg;
       this.type = alertData.type;
@@ -162,28 +116,14 @@ export default {
         this.msg = "";
       }, "3000");
     },
-    editBlock(id, status) {
-      console.log(id);
-      let bloco = this.blocks.find((b) => b.id === Number(id));
-      if (this.title) {
-        bloco.name = this.title;
-      }
-      if (this.email) {
-        bloco.email = this.email;
-      }
-      if (this.phone) {
-        bloco.phone = this.phone;
-      }
-      this.updateBlock(id, status);
-      setTimeout(() => {
-        document.location.reload(true);
-      }, "2000");
-    },
   },
 };
 </script>
 
 <style>
+ul.drag-inner-list .drag-item {
+  height: auto;
+}
 .drag-column-on-hold .drag-column-header {
   background: #fb7d44;
 }
